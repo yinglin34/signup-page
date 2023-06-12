@@ -1,0 +1,124 @@
+import React, { useState } from "react";
+import { SafeAreaView, TextInput, Pressable, Text, View, Alert } from "react-native";
+import SignupButton from "../components/SignupButton"; //must change to Signup button
+import globalStyles from "../styles/globalStyles";
+import { getAuth, createUserWithEmailAndPassword ,signInWithEmailAndPassword } from "firebase/auth"  
+import { createNativeStackNavigator } from "@react-navigation/native-stack";  
+
+import { doc, setDoc } from "@firebase/firestore";
+const db = require('../api/fireabaseConfig')
+
+
+const Stack = createNativeStackNavigator()
+
+const UserSignup = ({navigation}) =>{
+    const auth = getAuth()
+    const [email,setEmail] = useState('')
+    const [password,setPassword] = useState('')
+    const [username,setUsername] = useState('')
+
+
+    return (
+        <SafeAreaView>
+            <TextInput placeholder="Name" onChangeText={(e)=> setUsername(e)} />
+            <TextInput placeholder="Email" onChangeText={(e)=>{setEmail(e)}}/>
+            <TextInput placeholder="Password" onChangeText= {(e)=>(setPassword(e))}/>
+            <Pressable onPress={() => { navigation.navigate('userLogin') }}><Text>Already a User?</Text></Pressable>
+            <Pressable onPress={()=>{
+                console.log(email,password)
+
+                createUserWithEmailAndPassword(auth,email,password)
+                .then(()=>{
+
+                    const docRef = doc(db,'users',auth.currentUser.email)
+                    data = {
+                        'name': username
+                    }
+                    setDoc(docRef,data)
+                    .then(()=>{
+                        console.log("Successfully registered!")
+                        alert("User created! Please Login!")
+                        navigation.navigate('userLogin')
+                    })
+                    .catch((error)=>{
+                        console.log(error)
+                    })
+
+                   
+                })
+                .catch((error)=>{
+                    console.log(error.code)
+                    console.log(error.message)
+                })
+
+            }} 
+            style = {globalStyles.SignupButton}>
+
+                <Text> Register </Text>
+            </Pressable>
+        </SafeAreaView>
+
+
+    )
+
+}
+const UserLogin = ({navigation}) => {                
+    const auth = getAuth()
+    const [email, setEmail] = useState('')
+    const [password, setPassword] = useState('')
+
+    return (
+        <SafeAreaView style={globalStyles.container}>
+
+            <Text style={globalStyles.login_Title}>Login</Text>
+
+            <View style={globalStyles.SignupContainer}>
+
+                <TextInput style={globalStyles.userInput_email}
+                    placeholder="Email"
+                    placeholderTextColor="#818589"
+                    onChangeText={(e) => { setEmail(e) }} />
+
+                <TextInput style={globalStyles.userInput_password}
+                    placeholder="Password"
+                    placeholderTextColor="#818589"
+                    onChangeText={(e) => (setPassword(e))} />
+
+                <Pressable onPress={() => {
+                    console.log(email, password)
+
+                    signInWithEmailAndPassword(auth, email, password)
+                        .then((userCredential) => {
+                            const user = userCredential.user
+                            console.log(user)
+                        })
+                        .catch((error) => {
+                            console.log(error.code)
+                            console.log(error.message)
+                        })
+
+                }}
+                    style={globalStyles.SignupButton}>
+                    <Text style={globalStyles.SignupText}> Login </Text>
+                </Pressable>
+            </View>
+            <Text> Already have an account?</Text>
+
+            <Pressable onPress={() => { navigation.navigate('userRegister') }}
+                style={globalStyles.RegisterButton}>//?
+                <Text style={globalStyles.GetStartedText}>Sign up</Text></Pressable>
+
+        </SafeAreaView>
+    )
+}
+const SignupStack = () => {
+    return (
+        <Stack.Navigator>
+            <Stack.Screen name='name' component={UserSignup} options={{ headerShown: false }} />
+            <Stack.Screen name='userLogin' component={UserLogin} options={{ headerShown: false }} />
+        </Stack.Navigator>
+    )
+    
+
+}
+export default SignupStack
